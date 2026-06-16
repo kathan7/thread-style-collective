@@ -1,5 +1,3 @@
-import { Link } from "@tanstack/react-router";
-
 export function SiteFooter() {
   return (
     <footer className="bg-ink text-bone">
@@ -54,9 +52,9 @@ function FooterCol({ title, links }: { title: string; links: [string, string][] 
       <ul className="mt-4 flex flex-col gap-3">
         {links.map(([label, href]) => (
           <li key={label}>
-            <Link to={href} className="text-sm text-bone/80 transition-colors hover:text-bone">
+            <a href={href} className="text-sm text-bone/80 transition-colors hover:text-bone">
               {label}
-            </Link>
+            </a>
           </li>
         ))}
       </ul>
