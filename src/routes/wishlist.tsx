@@ -1,92 +1,42 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Heart, ShoppingBag } from "lucide-react";
-import { useMarketplace } from "../hooks/use-marketplace";
-import { ProductCard } from "../components/product-card";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Heart, ArrowRight, Loader2 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { motion } from "framer-motion";
+import { useMarketplace } from "../hooks/use-marketplace";
+import { ProductCard } from "../components/product-card";
 
 export const Route = createFileRoute("/wishlist")({
-  head: () => ({
-    meta: [
-      { title: "Your Collection Wishlist — THREADMARKET" },
-      { name: "description", content: "View your curated selection of authenticated design fashion." },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Wishlist — THREADMARKET" }] }),
   component: WishlistPage,
 });
 
 function WishlistPage() {
-  const { wishlist, products } = useMarketplace();
-
-  // Filter approved products that are in the user's wishlist
-  const wishlistedProducts = products.filter(
-    (p) => p.status === "approved" && wishlist.includes(p.id)
-  );
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05,
-      },
-    },
-  };
+  const { products, wishlist, productsLoading } = useMarketplace();
+  const wishlistedProducts = products.filter((p) => wishlist.includes(p.slug));
 
   return (
-    <div className="bg-bone text-ink min-h-screen flex flex-col justify-between">
+    <div className="bg-bone text-ink min-h-screen flex flex-col">
       <SiteHeader />
-
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-16">
-        <header className="mb-12">
-          <p className="eyebrow text-muted-foreground">My Archive</p>
-          <h1 className="font-display mt-3 text-balance text-5xl font-medium tracking-tight md:text-6xl">
-            Saved pieces.
-          </h1>
-          <p className="mt-4 text-sm text-muted-foreground">
-            {wishlistedProducts.length === 0 
-              ? "No items saved to your collection." 
-              : `${wishlistedProducts.length} curated luxury ${wishlistedProducts.length === 1 ? "piece" : "pieces"} bookmarked.`
-            }
-          </p>
-        </header>
+        <h1 className="font-display text-4xl font-medium tracking-tight mb-2">Wishlist</h1>
+        <p className="text-muted-foreground mb-10">{wishlistedProducts.length} saved item{wishlistedProducts.length !== 1 ? "s" : ""}</p>
 
-        {wishlistedProducts.length === 0 ? (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex flex-col items-center justify-center text-center py-20 bg-paper/50 rounded-2xl border border-ink/5"
-          >
-            <div className="size-16 rounded-full border border-ink/10 flex items-center justify-center bg-bone mb-6">
-              <Heart className="size-6 text-muted-foreground/60 animate-pulse" />
-            </div>
-            <h2 className="font-display text-2xl font-medium mb-3">Your wishlist is empty.</h2>
-            <p className="text-sm text-muted-foreground max-w-sm mb-8">
-              Keep track of items you admire. Tap the heart icon on any product to add them to your archive.
-            </p>
-            <a
-              href="/shop"
-              className="inline-flex h-12 items-center justify-center rounded-full bg-ink px-8 text-[11px] font-semibold uppercase tracking-widest text-bone hover:opacity-90 transition"
-            >
-              Discover Collections
-            </a>
-          </motion.div>
+        {productsLoading ? (
+          <div className="flex justify-center py-20"><Loader2 className="size-8 animate-spin text-muted-foreground" /></div>
+        ) : wishlistedProducts.length === 0 ? (
+          <div className="text-center py-20 bg-paper/50 border border-ink/5 rounded-2xl">
+            <Heart className="size-10 mx-auto text-muted-foreground/30 mb-4" />
+            <p className="font-medium mb-2">Your wishlist is empty</p>
+            <Link to="/shop" className="inline-flex h-10 items-center justify-center rounded-full bg-ink px-6 text-[11px] font-semibold uppercase tracking-widest text-bone mt-4">
+              Browse Shop
+            </Link>
+          </div>
         ) : (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            className="grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-3 lg:grid-cols-4"
-          >
-            {wishlistedProducts.map((product, i) => (
-              <ProductCard key={product.id} product={product} index={i} />
-            ))}
-          </motion.div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {wishlistedProducts.map((p, i) => <ProductCard key={p.slug} product={p} index={i} />)}
+          </div>
         )}
       </main>
-
       <SiteFooter />
     </div>
   );

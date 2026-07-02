@@ -1,12 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Heart, Star, ArrowUpRight, Truck, RotateCcw, Lock, BadgeCheck, ArrowRight, ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { Truck, RotateCcw, Lock, BadgeCheck, ArrowRight } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { useMarketplace } from "../hooks/use-marketplace";
 import { ProductCard } from "../components/product-card";
-import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import heroEditorial from "@/assets/hero-editorial.jpg";
 import arrival1 from "@/assets/arrival-1.jpg";
 import arrival2 from "@/assets/arrival-2.jpg";
@@ -39,7 +37,6 @@ function Home() {
       <CategoryStrip />
       <Trending />
       <EditorialSplit />
-      <FeaturedSellers />
       <TrustStrip />
       <SiteFooter />
     </div>
@@ -142,10 +139,10 @@ function Hero() {
               <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link
-              to="/sellers"
+              to="/auth"
               className="inline-flex h-13 items-center justify-center rounded-full border border-bone/25 bg-bone/5 px-8 text-[11px] font-semibold uppercase tracking-widest text-bone backdrop-blur-md transition hover:bg-bone/15 active:scale-98"
             >
-              Explore Designers
+              Create Account
             </Link>
           </motion.div>
         </motion.div>
@@ -190,150 +187,66 @@ function CategoryStrip() {
       <div className="mx-auto max-w-7xl px-6 py-24">
         <div className="mb-14 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <p className="eyebrow text-muted-foreground">Explore by Category</p>
+            <p className="eyebrow text-muted-foreground">Categories</p>
             <h2 className="font-display mt-2 text-balance text-4xl font-medium tracking-tight md:text-5xl">
-              Shop by intention.
+              Shop by category
             </h2>
           </div>
-          <Link
-            to="/shop"
-            className="group text-[12px] font-semibold uppercase tracking-widest text-ink hover:text-ink/70 transition flex items-center gap-1.5"
-          >
-            <span>View all categories</span>
-            <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+          <Link to="/shop" className="group text-[12px] font-semibold uppercase tracking-widest text-ink hover:text-ink/70 transition flex items-center gap-1.5">
+            View all <ArrowRight className="size-3.5" />
           </Link>
         </div>
 
-        <motion.div
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: "-100px" }}
-          variants={{
-            hidden: {},
-            show: { transition: { staggerChildren: 0.05 } }
-          }}
-          className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-7"
-        >
-          {categories.map((c) => (
-            <motion.div
-              key={c.slug}
-              variants={{
-                hidden: { opacity: 0, y: 15 },
-                show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
-              }}
-            >
-              <Link to="/shop" className="group block text-center">
-                <div className="relative aspect-square overflow-hidden rounded-xl bg-paper ring-1 ring-ink/5 transition duration-500 group-hover:shadow-editorial group-hover:ring-ink/10">
-                  <img
-                    src={c.image}
-                    alt={c.name}
-                    loading="lazy"
-                    width={400}
-                    height={400}
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  {/* Subtle vignette on hover */}
-                  <div className="absolute inset-0 bg-ink/0 transition-colors duration-500 group-hover:bg-ink/5" />
-                </div>
-                <p className="font-display italic mt-4 text-[13px] font-medium tracking-wide transition group-hover:text-ink/75">
-                  {c.name}
-                </p>
+        {categories.length === 0 ? (
+          <p className="text-muted-foreground text-sm">Categories will appear once products are added by admin.</p>
+        ) : (
+          <div className="flex flex-wrap gap-3">
+            {categories.map((c) => (
+              <Link
+                key={c.slug}
+                to="/shop"
+                className="rounded-full border border-ink/10 bg-paper px-6 py-3 text-sm font-medium hover:border-ink hover:bg-ink hover:text-bone transition"
+              >
+                {c.name}
               </Link>
-            </motion.div>
-          ))}
-        </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
 }
 
-type TabType = "curated" | "new" | "rare";
-
 function Trending() {
-  const { products } = useMarketplace();
-  const [activeTab, setActiveTab] = useState<TabType>("curated");
-
-  const approved = products.filter((p) => p.status === "approved");
-
-  // Dynamic products filtering based on interactive tabs
-  const getFilteredProducts = () => {
-    switch (activeTab) {
-      case "new":
-        // Show last 6 items
-        return [...approved].slice(-6).reverse();
-      case "rare":
-        // Filter limited run items
-        return approved.filter((p) => p.tag && ["rare", "archive", "limited"].includes(p.tag.toLowerCase())).slice(0, 6);
-      case "curated":
-      default:
-        // High rating pieces
-        return [...approved].sort((a, b) => b.rating - a.rating).slice(0, 6);
-    }
-  };
-
-  const displayedProducts = getFilteredProducts();
+  const { products, productsLoading } = useMarketplace();
+  const displayedProducts = products.slice(0, 6);
 
   return (
     <section className="bg-bone relative">
       <div className="mx-auto max-w-7xl px-6 py-24">
-
-        {/* Dynamic header row with tab controls */}
-        <div className="mb-14 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-ink/5 pb-8">
-          <div>
-            <p className="eyebrow text-muted-foreground">Curated Selection</p>
-            <h2 className="font-display mt-2 text-balance text-4xl font-medium tracking-tight md:text-5xl">
-              Trending pieces.
-            </h2>
-          </div>
-
-          <div className="flex gap-4">
-            {([
-              { id: "curated", label: "Curated" },
-              { id: "new", label: "New Arrivals" },
-              { id: "rare", label: "Archival" }
-            ] as const).map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`pb-2 text-[11px] font-bold uppercase tracking-widest relative cursor-pointer transition ${activeTab === tab.id ? "text-ink" : "text-muted-foreground hover:text-ink"
-                  }`}
-              >
-                <span>{tab.label}</span>
-                {activeTab === tab.id && (
-                  <motion.div
-                    layoutId="activeTabUnderline"
-                    className="absolute bottom-0 inset-x-0 h-0.5 bg-ink"
-                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                  />
-                )}
-              </button>
-            ))}
-          </div>
+        <div className="mb-14 border-b border-ink/5 pb-8">
+          <p className="eyebrow text-muted-foreground">Latest Products</p>
+          <h2 className="font-display mt-2 text-4xl font-medium tracking-tight md:text-5xl">Shop now</h2>
         </div>
 
-        {/* Staggered load list grid */}
-        <div className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
-          <AnimatePresence mode="wait">
+        {productsLoading ? (
+          <p className="text-muted-foreground text-center py-12">Loading products...</p>
+        ) : displayedProducts.length === 0 ? (
+          <div className="text-center py-12 bg-paper/50 border border-ink/5 rounded-2xl">
+            <p className="text-muted-foreground mb-4">No products listed yet.</p>
+            <p className="text-sm text-muted-foreground">Admin can add products from the admin panel.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
             {displayedProducts.map((p, i) => (
-              <motion.div
-                key={`${activeTab}-${p.id}`}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.4, delay: i * 0.04 }}
-              >
-                <ProductCard product={p} index={i} />
-              </motion.div>
+              <ProductCard key={p.slug} product={p} index={i} />
             ))}
-          </AnimatePresence>
-        </div>
+          </div>
+        )}
 
         <div className="mt-16 text-center">
-          <Link
-            to="/shop"
-            className="inline-flex h-12 items-center justify-center rounded-full bg-ink px-10 text-[11px] font-semibold uppercase tracking-widest text-bone hover:opacity-90 active:scale-98 transition"
-          >
-            Explore Full Catalog
+          <Link to="/shop" className="inline-flex h-12 items-center justify-center rounded-full bg-ink px-10 text-[11px] font-semibold uppercase tracking-widest text-bone hover:opacity-90 transition">
+            View All Products
           </Link>
         </div>
       </div>
@@ -397,135 +310,6 @@ function EditorialSplit() {
               className="h-full w-full object-cover"
             />
           </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FeaturedSellers() {
-  const { sellers, followedSellers, followSeller, products } = useMarketplace();
-
-  // Show approved sellers
-  const approvedSellers = sellers.filter((s) => s.status === "approved").slice(0, 3);
-
-  const handleFollowClick = (e: React.MouseEvent, slug: string, name: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    followSeller(slug);
-    const isFollowing = followedSellers.includes(slug);
-    if (!isFollowing) {
-      toast.success(`Now following ${name}`);
-    } else {
-      toast.info(`No longer following ${name}`);
-    }
-  };
-
-  return (
-    <section className="bg-bone relative">
-      <div className="mx-auto max-w-7xl px-6 py-24">
-
-        <div className="mb-14 flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <p className="eyebrow text-muted-foreground">The Collective</p>
-            <h2 className="font-display mt-2 text-balance text-4xl font-medium tracking-tight md:text-5xl">
-              Featured boutiques.
-            </h2>
-          </div>
-          <Link
-            to="/sellers"
-            className="group text-[12px] font-semibold uppercase tracking-widest text-ink hover:text-ink/70 transition flex items-center gap-1.5"
-          >
-            <span>All designers Directory</span>
-            <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-        </div>
-
-        {/* Premium storefront card grid layout */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {approvedSellers.map((s) => {
-            const isFollowing = followedSellers.includes(s.slug);
-            // Get 3 items of this seller for preview row
-            const sellerPreviewProducts = products
-              .filter((p) => p.sellerSlug === s.slug && p.status === "approved")
-              .slice(0, 3);
-
-            return (
-              <div
-                key={s.slug}
-                className="group flex flex-col rounded-2xl bg-paper p-5 ring-1 ring-ink/5 hover:ring-ink/10 transition duration-500 hover:shadow-editorial"
-              >
-                {/* Header card area click goes to seller storefront */}
-                <Link to="/store/$slug" params={{ slug: s.slug }} className="block">
-                  <div className="relative h-36 overflow-hidden rounded-xl bg-ink/5">
-                    <img
-                      src={s.banner}
-                      alt={`${s.name} banner`}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-102"
-                    />
-                    <div className="absolute -bottom-6 left-6 grid size-14 place-items-center rounded-full border-4 border-paper bg-ink text-bone shadow-md">
-                      <span className="font-display text-sm font-medium">{s.initials}</span>
-                    </div>
-                  </div>
-                </Link>
-
-                <div className="mt-8 px-1 flex-1 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-start justify-between gap-3">
-                      <Link to="/store/$slug" params={{ slug: s.slug }} className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <h4 className="font-display text-xl font-medium truncate group-hover:text-ink/75 transition">{s.name}</h4>
-                          <BadgeCheck className="size-4 text-ink/60 shrink-0" />
-                        </div>
-                        <p className="mt-1 text-[11.5px] text-muted-foreground">
-                          {s.city} · ★ {s.rating}
-                        </p>
-                      </Link>
-
-                      <button
-                        onClick={(e) => handleFollowClick(e, s.slug, s.name)}
-                        className={`rounded-full px-4 py-1.5 text-[10.5px] font-semibold uppercase tracking-widest cursor-pointer transition-all shrink-0 active:scale-95 ${isFollowing
-                          ? "bg-paper text-ink border border-ink/15 hover:bg-bone hover:border-ink"
-                          : "bg-ink text-bone border border-ink hover:opacity-90"
-                          }`}
-                      >
-                        {isFollowing ? "Following" : "Follow"}
-                      </button>
-                    </div>
-
-                    <p className="mt-4 text-[12.5px] text-muted-foreground line-clamp-2 leading-relaxed font-light">
-                      {s.bio}
-                    </p>
-                  </div>
-
-                  {/* Brand dynamic items mini-preview row */}
-                  {sellerPreviewProducts.length > 0 && (
-                    <div className="mt-6 pt-5 border-t border-ink/5">
-                      <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">Live Collection</p>
-                      <div className="flex gap-2">
-                        {sellerPreviewProducts.map((p) => (
-                          <Link
-                            key={p.id}
-                            to="/product/$id"
-                            params={{ id: p.id }}
-                            className="aspect-[3/4] w-14 overflow-hidden rounded bg-bone border border-ink/5 hover:border-ink/20 transition group/thumb relative"
-                          >
-                            <img src={p.image} alt={p.name} className="h-full w-full object-cover transition-transform group-hover/thumb:scale-105" />
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="mt-6 pt-4 border-t border-ink/5 flex justify-between text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    <span>{s.productCount} Pieces</span>
-                    <span>{s.followers} Followers</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
         </div>
       </div>
     </section>
